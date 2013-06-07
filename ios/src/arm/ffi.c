@@ -124,6 +124,7 @@ static size_t ffi_put_arg(ffi_type **arg_type, void **arg, char *stack)
    value is cif->vfp_used (word bitset of VFP regs used for passing
    arguments). These are only used for the VFP hard-float ABI.
 */
+int ffi_prep_args_SYSV(char *stack, extended_cif *ecif, float *vfp_space);
 int ffi_prep_args_SYSV(char *stack, extended_cif *ecif, float *vfp_space)
 {
   register unsigned int i;
@@ -151,6 +152,7 @@ int ffi_prep_args_SYSV(char *stack, extended_cif *ecif, float *vfp_space)
   return 0;
 }
 
+int ffi_prep_args_VFP(char *stack, extended_cif *ecif, float *vfp_space);
 int ffi_prep_args_VFP(char *stack, extended_cif *ecif, float *vfp_space)
 {
   // make sure we are using FFI_VFP
@@ -162,7 +164,7 @@ int ffi_prep_args_VFP(char *stack, extended_cif *ecif, float *vfp_space)
   register ffi_type **p_arg;
   char stack_used = 0;
   char done_with_regs = 0;
-  char is_vfp_type;
+  int is_vfp_type;
 
   /* the first 4 words on the stack are used for values passed in core
    * registers. */
@@ -348,9 +350,9 @@ void ffi_call(ffi_cif *cif, void (*fn)(void), void *rvalue, void **avalue)
       FFI_ASSERT(0);
       break;
     }
-  if (small_struct)
+  if (small_struct && rvalue != NULL)
     memcpy (rvalue, &temp, cif->rtype->size);
-  else if (vfp_struct)
+  else if (vfp_struct && rvalue != NULL)
     memcpy (rvalue, ecif.rvalue, cif->rtype->size);
 }
 
@@ -368,12 +370,8 @@ void ffi_closure_VFP (ffi_closure *);
 
 /* This function is jumped to by the trampoline */
 
-unsigned int
-ffi_closure_inner (closure, respp, args, vfp_args)
-     ffi_closure *closure;
-     void **respp;
-     void *args;
-     void *vfp_args;
+unsigned int ffi_closure_inner (ffi_closure *closure, void **respp, void *args, void *vfp_args);
+unsigned int ffi_closure_inner (ffi_closure *closure, void **respp, void *args, void *vfp_args)
 {
   // our various things...
   ffi_cif       *cif;
@@ -452,7 +450,7 @@ ffi_prep_incoming_args_VFP(char *stack, void **rvalue,
   register ffi_type **p_arg;
   char done_with_regs = 0;
   char stack_used = 0;
-  char is_vfp_type;
+  int is_vfp_type;
 
   FFI_ASSERT(cif->abi == FFI_VFP);
   regp = stack;
@@ -847,7 +845,7 @@ static int vfp_type_p (ffi_type *t)
       if (t->type == FFI_TYPE_STRUCT)
 	{
 	  if (elnum == 1)
-	    t->type = elt;
+	    t->type = (typeof(t->type))elt;
 	  else
 	    t->type = (elt == FFI_TYPE_FLOAT
 		       ? FFI_TYPE_STRUCT_VFP_FLOAT
@@ -881,7 +879,7 @@ static void place_vfp_arg (ffi_cif *cif, ffi_type *t)
 	}
       /* Found regs to allocate. */
       cif->vfp_used |= new_used;
-      cif->vfp_args[cif->vfp_nargs++] = reg;
+      cif->vfp_args[cif->vfp_nargs++] = (typeof(*(cif->vfp_args)))reg;
 
       /* Update vfp_reg_free. */
       if (cif->vfp_used & (1 << cif->vfp_reg_free))
@@ -889,7 +887,7 @@ static void place_vfp_arg (ffi_cif *cif, ffi_type *t)
 	  reg += nregs;
 	  while (cif->vfp_used & (1 << reg))
 	    reg += 1;
-	  cif->vfp_reg_free = reg;
+	  cif->vfp_reg_free = (typeof(cif->vfp_reg_free))reg;
 	}
       return;
     next_reg: ;
