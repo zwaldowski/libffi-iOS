@@ -4,7 +4,6 @@ import re
 import os
 import errno
 import collections
-import sys
 #developer_path =
 
 
@@ -19,14 +18,15 @@ def sdkinfo(sdkname):
     for line in subprocess.Popen(['xcodebuild', '-sdk', sdkname, '-version'], stdout=subprocess.PIPE).stdout:
         kv = line.strip().split(': ', 1)
         if len(kv) == 2:
-            k,v = kv
+            k, v = kv
             ret[k] = v
     return ret
+
 
 def mkdir_p(path):
     try:
         os.makedirs(path)
-    except OSError as exc: # Python >2.5
+    except OSError as exc:  # Python >2.5
         if exc.errno == errno.EEXIST:
             pass
         else:
@@ -35,6 +35,7 @@ def mkdir_p(path):
 
 sim_sdk_info = sdkinfo('iphonesimulator')
 device_sdk_info = sdkinfo('iphoneos')
+
 
 def latest_sdks():
     latest_sim = None
@@ -51,8 +52,9 @@ def latest_sdks():
 
 sim_sdk, device_sdk = latest_sdks()
 
+
 class simulator_platform(Platform):
-    sdk='iphonesimulator'
+    sdk = 'iphonesimulator'
     arch = 'i386'
     short_arch = arch
     triple = 'i386-apple-darwin10'
@@ -61,8 +63,9 @@ class simulator_platform(Platform):
     prefix = "#if !defined(__arm__) && defined(__i386__)\n\n"
     suffix = "\n\n#endif"
 
+
 class device_platform(Platform):
-    sdk='iphoneos'
+    sdk = 'iphoneos'
     arch = 'armv7'
     short_arch = 'arm'
     triple = 'arm-apple-darwin10'
@@ -78,7 +81,7 @@ def move_file(src_dir, dst_dir, filename, file_suffix=None, prefix='', suffix=''
 
     if file_suffix:
         split_name = os.path.splitext(filename)
-        out_filename =  "%s_%s%s" % (split_name[0], file_suffix, split_name[1])
+        out_filename = "%s_%s%s" % (split_name[0], file_suffix, split_name[1])
 
     with open(os.path.join(src_dir, filename)) as in_file:
         with open(os.path.join(dst_dir, out_filename), 'w') as out_file:
@@ -92,16 +95,15 @@ def move_file(src_dir, dst_dir, filename, file_suffix=None, prefix='', suffix=''
 
 headers_seen = collections.defaultdict(set)
 
+
 def move_source_tree(src_dir, dest_dir, dest_include_dir, arch=None, prefix=None, suffix=None):
     for root, dirs, files in os.walk(src_dir, followlinks=True):
-        relroot = os.path.relpath(root,src_dir)
+        relroot = os.path.relpath(root, src_dir)
 
         def move_dir(arch, prefix='', suffix='', files=[]):
             for file in files:
-                file_suffix = None
                 if file.endswith('.h'):
                     if dest_include_dir:
-                        file_suffix = arch
                         if arch:
                             headers_seen[file].add(arch)
                         move_file(root, dest_include_dir, file, arch, prefix=prefix, suffix=suffix)
@@ -119,12 +121,13 @@ def move_source_tree(src_dir, dest_dir, dest_include_dir, arch=None, prefix=None
             move_dir(arch='arm',
                      prefix="#ifdef __arm__\n\n",
                      suffix="\n\n#endif",
-                     files=files)
+                     files=['sysv.S', 'trampoline.S', 'ffi.c'])
         elif relroot == 'x86':
             move_dir(arch='i386',
                      prefix="#if !defined(__arm__) && defined(__i386__)\n\n",
                      suffix="\n\n#endif",
-                     files=files)
+                     files=['darwin.S', 'ffi.c'])
+
 
 def build_target(platform):
     def xcrun_cmd(cmd):
@@ -135,7 +138,7 @@ def build_target(platform):
     env = dict(CC=xcrun_cmd('clang'),
                LD=xcrun_cmd('ld'),
                CFLAGS='-arch %s -isysroot %s -miphoneos-version-min=4.3' % (platform.arch, platform.sdkroot))
-    working_dir=os.getcwd()
+    working_dir = os.getcwd()
     try:
         os.chdir(build_dir)
         subprocess.check_call(['../configure', '-host', platform.triple], env=env)
@@ -152,6 +155,7 @@ def build_target(platform):
 
     for header_name, archs in headers_seen.iteritems():
         basename, suffix = os.path.splitext(header_name)
+
 
 def make_tramp():
     with open('src/arm/trampoline.S', 'w') as tramp_out:
