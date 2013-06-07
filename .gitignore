@@ -8,6 +8,9 @@ Makefile
 config.log
 config.status
 *~
+fficonfig.h
+include/ffi.h
+include/ffitarget.h
 libffi.pc
 libtool
 stamp-h1
@@ -15,4 +18,5 @@ libffi*gz
 autom4te.cache
 libffi.xcodeproj/xcuserdata
 libffi.xcodeproj/project.xcworkspace
+ios/
 build_*/
