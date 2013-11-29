@@ -1,3 +1,286 @@
+2013-11-21  Anthony Green  <green@moxielogic.com>
+
+	* configure, Makefile.in, include/Makefile.in, include/ffi.h.in,
+	man/Makefile.in, testsuite/Makefile.in: Rebuilt.
+
+2013-11-21  Alan Modra  <amodra@gmail.com>
+
+	* Makefile.am (EXTRA_DIST): Add new src/powerpc files.
+	(nodist_libffi_la_SOURCES <POWERPC, POWERPC_FREEBSD>): Likewise.
+	* configure.ac (HAVE_LONG_DOUBLE_VARIANT): Define for powerpc.
+	* include/ffi.h.in (ffi_prep_types): Declare.
+	* src/prep_cif.c (ffi_prep_cif_core): Call ffi_prep_types.
+	* src/types.c (FFI_NONCONST_TYPEDEF): Define and use for
+	HAVE_LONG_DOUBLE_VARIANT.
+	* src/powerpc/ffi_powerpc.h: New file.
+	* src/powerpc/ffi.c: Split into..
+	* src/powerpc/ffi_sysv.c: ..new file, and..
+	* src/powerpc/ffi_linux64.c: ..new file, rewriting parts.
+	* src/powerpc/ffitarget.h (enum ffi_abi): Rewrite powerpc ABI
+	selection as bits controlling features.
+	* src/powerpc/linux64.S: For consistency, use POWERPC64 rather
+	than __powerpc64__.
+	* src/powerpc/linux64_closure.S: Likewise.
+	* src/powerpc/ppc_closure.S: Likewise.  Move .note.FNU-stack
+	inside guard.
+	* src/powerpc/sysv.S: Likewise.
+	* configure: Regenerate.
+	* fficonfig.h.in: Regenerate.
+	* Makefile.in: Regenerate.
+
+2013-11-20  Alan Modra  <amodra@gmail.com>
+
+	* src/powerpc/ffi.c (ffi_prep_cif_machdep_core): Use
+	NUM_FPR_ARG_REGISTERS64 and NUM_GPR_ARG_REGISTERS64 not their
+	32-bit versions for 64-bit code.
+	* src/powerpc/linux64_closure.S: Don't use the return value area
+	as a parameter save area on ELFv2.
+
+2013-11-18  Iain Sandoe  <iain@codesourcery.com>
+
+	* src/powerpc/darwin.S (EH): Correct use of pcrel FDE encoding.
+	* src/powerpc/darwin_closure.S (EH): Likewise. Modernise picbase
+	labels.
+
+2013-11-18  Anthony Green  <green@moxielogic.com>
+
+	* src/arm/ffi.c (ffi_call): Hoist declaration of temp to top of
+	function.
+	* src/arm/ffi.c (ffi_closure_inner): Moderize function declaration
+	to appease compiler.
+	Thanks for Gregory P. Smith <greg@krypto.org>.
+
+2013-11-18  Anthony Green  <green@moxielogic.com>
+
+	* README (tested): Mention PowerPC ELFv2.
+
+2013-11-16  Alan Modra  <amodra@gmail.com>
+
+	* src/powerpc/ppc_closure.S: Move errant #endif to where it belongs.
+	Don't bl .Luint128.
+
+2013-11-16  Alan Modra  <amodra@gmail.com>
+
+	* src/powerpc/ffi.c (ffi_prep_cif_machdep_core): Use #if _CALL_ELF
+	test to select parameter save sizing for ELFv2 vs. ELFv1.
+	* src/powerpc/ffitarget.h (FFI_V2_TYPE_FLOAT_HOMOG,
+	FFI_V2_TYPE_DOUBLE_HOMOG, FFI_V2_TYPE_SMALL_STRUCT): Define.
+	(FFI_TRAMPOLINE_SIZE): Define variant for ELFv2.
+	* src/powerpc/ffi.c (FLAG_ARG_NEEDS_PSAVE): Define.
+	(discover_homogeneous_aggregate): New function.
+	(ffi_prep_args64): Adjust start of param save area for ELFv2.
+	Handle homogenous floating point struct parms.
+	(ffi_prep_cif_machdep_core): Adjust space calculation for ELFv2.
+	Handle ELFv2 return values.  Set FLAG_ARG_NEEDS_PSAVE.  Handle
+	homogenous floating point structs.
+	(ffi_call): Increase size of smst_buffer for ELFv2.  Handle ELFv2.
+	(flush_icache): Compile for ELFv2.
+	(ffi_prep_closure_loc): Set up ELFv2 trampoline.
+	(ffi_closure_helper_LINUX64): Don't return all structs directly
+	to caller.  Handle homogenous floating point structs.  Handle
+	ELFv2 struct return values.
+	* src/powerpc/linux64.S (ffi_call_LINUX64): Set up r2 for
+	ELFv2.  Adjust toc save location.  Call function pointer using
+	r12.  Handle FLAG_RETURNS_SMST.  Don't predict branches.
+	* src/powerpc/linux64_closure.S (ffi_closure_LINUX64): Set up r2
+	for ELFv2.  Define ELFv2 versions of STACKFRAME, PARMSAVE, and
+	RETVAL.  Handle possibly missing parameter save area.  Handle
+	ELFv2 return values.
+	(.note.GNU-stack): Move inside outer #ifdef.
+
+2013-11-16  Alan Modra  <amodra@gmail.com>
+
+	* src/powerpc/ffi.c (ffi_prep_cif_machdep): Revert 2013-02-08
+	change.  Do not consume an int arg when returning a small struct
+	for FFI_SYSV ABI.
+	(ffi_call): Only use bounce buffer when FLAG_RETURNS_SMST.
+	Properly copy bounce buffer to destination.
+	* src/powerpc/sysv.S: Revert 2013-02-08 change.
+	* src/powerpc/ppc_closure.S: Remove stray '+'.
+
+2013-11-16  Alan Modra  <amodra@gmail.com>
+
+	* src/powerpc/ffi.c (ffi_prep_args64): Align struct parameters
+	according to __STRUCT_PARM_ALIGN__.
+	(ffi_prep_cif_machdep_core): Likewise.
+	(ffi_closure_helper_LINUX64): Likewise.
+
+2013-11-16  Alan Modra  <amodra@gmail.com>
+
+	* src/powerpc/linux64.S (ffi_call_LINUX64): Tweak restore of r28.
+	(.note.GNU-stack): Move inside outer #ifdef.
+	* src/powerpc/linux64_closure.S (STACKFRAME, PARMSAVE,
+	RETVAL): Define and use throughout.
+	(ffi_closure_LINUX64): Save fprs before buying stack.
+	(.note.GNU-stack): Move inside outer #ifdef.
+
+2013-11-16  Alan Modra  <amodra@gmail.com>
+
+	* src/powerpc/ffitarget.h (FFI_TARGET_SPECIFIC_VARIADIC): Define.
+	(FFI_EXTRA_CIF_FIELDS): Define.
+	* src/powerpc/ffi.c (ffi_prep_args64): Save fprs as per the
+	ABI, not to both fpr and param save area.
+	(ffi_prep_cif_machdep_core): Renamed from ffi_prep_cif_machdep.
+	Keep initial flags.  Formatting.  Remove dead FFI_LINUX_SOFT_FLOAT
+	code.
+	(ffi_prep_cif_machdep, ffi_prep_cif_machdep_var): New functions.
+	(ffi_closure_helper_LINUX64): Pass floating point as per ABI,
+	not to both fpr and parameter save areas.
+
+	* libffi/testsuite/libffi.call/cls_double_va.c (main): Correct
+	function cast and don't call ffi_prep_cif.
+	* libffi/testsuite/libffi.call/cls_longdouble_va.c (main): Likewise.
+
+2013-11-15  Andrew Haley  <aph@redhat.com>
+
+	* doc/libffi.texi (Closure Example): Fix the sample code.
+	* doc/libffi.info, doc/stamp-vti, doc/version.texi: Rebuilt.
+
+2013-11-15  Andrew Haley  <aph@redhat.com>
+
+	* testsuite/libffi.call/va_struct1.c (main): Fix broken test.
+	* testsuite/libffi.call/cls_uint_va.c (cls_ret_T_fn): Likewise
+	* testsuite/libffi.call/cls_struct_va1.c (test_fn): Likewise.
+	* testsuite/libffi.call/va_1.c (main): Likewise.
+
+2013-11-14  David Schneider  <david.schneider@bivab.de>
+
+	* src/arm/ffi.c: Fix register allocation for mixed float and
+	doubles.
+	* testsuite/libffi.call/cls_many_mixed_float_double.c: Testcase
+	for many mixed float and double arguments.
+
+2013-11-13  Alan Modra  <amodra@gmail.com>
+
+	* doc/libffi.texi (Simple Example): Correct example code.
+	* doc/libffi.info, doc/stamp-vti, doc/version.texi: Rebuilt.
+
+2013-11-13  Anthony Green  <green@moxielogic.com>
+
+	* include/ffi_common.h: Respect HAVE_ALLOCA_H for GNU compiler
+	based build. (Thanks to tmr111116 on github)
+
+2013-11-09  Anthony Green  <green@moxielogic.com>
+
+	* m4/libtool.m4: Refresh.
+	* configure, Makefile.in: Rebuilt.
+	* README: Add more notes about next release.
+
+2013-11-09  Shigeharu TAKENO  <shige@iee.niit.ac.jp>
+
+	* m4/ax_gcc_archflag.m4 (ax_gcc_arch): Don't recognize
+	UltraSPARC-IIi as ultrasparc3.
+
+2013-11-06  Mark Kettenis  <kettenis@gnu.org>
+
+	* src/x86/freebsd.S (ffi_call_SYSV): Align the stack pointer to
+        16-bytes.
+
+2013-11-06  Konstantin Belousov <kib@freebsd.org>
+
+	* src/x86/freebsd.S (ffi_closure_raw_SYSV): Mark the assembler
+	source as not requiring executable stack.
+
+2013-11-02  Anthony Green  <green@moxielogic.com>
+
+	* doc/libffi.texi (The Basics): Clarify return value buffer size
+	requirements.  Also, NULL result buffer pointers are no longer
+	supported.
+	* doc/libffi.info: Rebuilt.
+
+2013-11-02  Mischa Jonker  <mjonker@synopsys.com>
+
+	* Makefile.am (nodist_libffi_la_SOURCES): Fix build error.
+	* Makefile.in: Rebuilt.
+
+2013-11-02  David Schneider  <david.schneider@bivab.de>
+
+	* src/arm/ffi.c: more robust argument handling for closures on arm hardfloat
+	* testsuite/libffi.call/many_mixed.c: New file.
+	* testsuite/libffi.call/cls_many_mixed_args.c: More tests.
+
+2013-11-02  Vitaly Budovski
+
+	* src/x86/ffi.c (ffi_prep_cif_machdep): Don't align stack for win32.
+
+2013-10-23  Mark H Weaver  <mhw@netris.org>
+
+	* src/mips/ffi.c: Fix handling of uint32_t arguments on the
+	MIPS N32 ABI.
+
+2013-10-13  Sandra Loosemore  <sandra@codesourcery.com>
+
+	* README: Add Nios II to table of supported platforms.
+	* Makefile.am (EXTRA_DIST): Add nios2 files.
+	(nodist_libffi_la_SOURCES): Likewise.
+	* Makefile.in: Regenerated.
+	* configure.ac (nios2*-linux*): New host.
+	(NIOS2): Add AM_CONDITIONAL.
+	* configure: Regenerated.
+	* src/nios2/ffi.c: New.
+	* src/nios2/ffitarget.h: New.
+	* src/nios2/sysv.S: New.
+	* src/prep_cif.c (initialize_aggregate): Handle extra structure
+	alignment via FFI_AGGREGATE_ALIGNMENT.
+	(ffi_prep_cif_core): Conditionalize structure return for NIOS2.
+
+2013-10-10  Sandra Loosemore  <sandra@codesourcery.com>
+
+	* testsuite/libffi.call/cls_many_mixed_args.c (cls_ret_double_fn):
+	Fix uninitialized variable.
+
+2013-10-11  Marcus Shawcroft  <marcus.shawcroft@arm.com>
+
+	* testsuite/libffi.call/many.c (many): Replace * with +.
+
+2013-10-08  Ondřej Bílka  <neleai@seznam.cz>
+
+	* src/aarch64/ffi.c, src/aarch64/sysv.S, src/arm/ffi.c,
+	src/arm/gentramp.sh, src/bfin/sysv.S, src/closures.c,
+	src/dlmalloc.c, src/ia64/ffi.c, src/microblaze/ffi.c,
+	src/microblaze/sysv.S, src/powerpc/darwin_closure.S,
+	src/powerpc/ffi.c, src/powerpc/ffi_darwin.c, src/sh/ffi.c,
+	src/tile/tile.S, testsuite/libffi.call/nested_struct11.c: Fix
+	spelling errors.
+
+2013-10-08  Anthony Green  <green@moxielogic.com>
+
+	* aclocal.m4, compile, config.guess, config.sub, depcomp,
+	install-sh, mdate-sh, missing, texinfo.tex: Update from upstream.
+	* configure.ac: Update version to 3.0.14-rc0.
+	* Makefile.in, configure, Makefile.in, include/Makefile.in,
+	man/Makefile.in, testsuite/Makefile.in: Rebuilt.
+	* README: Mention M88K and VAX.
+
+2013-07-15  Miod Vallat  <miod@openbsd.org>
+
+	* Makefile.am,
+	configure.ac,
+	src/m88k/ffi.c,
+	src/m88k/ffitarget.h,
+	src/m88k/obsd.S,
+	src/vax/elfbsd.S,
+	src/vax/ffi.c,
+	src/vax/ffitarget.h: Add m88k and vax support.
+
+2013-06-24 Alan Modra  <amodra@gmail.com>
+
+	* src/powerpc/ffi.c (ffi_prep_args_SYSV): Move var declaration
+	before statements.
+	(ffi_prep_args64): Support little-endian.
+	(ffi_closure_helper_SYSV, ffi_closure_helper_LINUX64): Likewise.
+	* src/powerpc/linux64_closure.S (ffi_closure_LINUX64): Likewise.
+	* src/powerpc/ppc_closure.S (ffi_closure_SYSV): Likewise.
+
+2013-06-12  Mischa Jonker  <mjonker@synopsys.com>
+
+	 * configure.ac: Add support for ARC.
+	 * Makefile.am: Likewise.
+	 * README: Add ARC details.
+	 * src/arc/arcompact.S: New.
+	 * src/arc/ffi.c: Likewise.
+	 * src/arc/ffitarget.h: Likewise.
+
 2013-03-28  David Schneider  <david.schneider@bivab.de>
 
 	 * src/arm/ffi.c: Fix support for ARM hard-float calling convention.
@@ -345,7 +628,7 @@
 	(required for shared libs on cygwin/mingw).
 	* Makefile.in: Rebuilt.
 
-2012-10-31  Alan Modra  <amodra@gmail.com>
+2012-10-31  Alan Modra  <amodra@gmail.co>
 
 	* src/powerpc/linux64_closure.S: Add new ABI support.
 	* src/powerpc/linux64.S: Likewise.

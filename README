@@ -1,7 +1,7 @@
 Status
 ======
 
-libffi-3.0.13 was released on March 17, 2013.  Check the libffi web
+libffi-3.0.14 was released on TBD.  Check the libffi web
 page for updates: <URL:http://sourceware.org/libffi/>.
 
 
@@ -54,6 +54,7 @@ tested:
 | AArch64         | Linux            | GCC                     |
 | Alpha           | Linux            | GCC                     |
 | Alpha           | Tru64            | GCC                     |
+| ARC             | Linux            | GCC                     |
 | ARM             | Linux            | GCC                     |
 | ARM             | iOS              | GCC                     |
 | AVR32           | Linux            | GCC                     |
@@ -61,15 +62,17 @@ tested:
 | HPPA            | HPUX             | GCC                     |
 | IA-64           | Linux            | GCC                     |
 | M68K            | FreeMiNT         | GCC                     |
-| M68K            | Linux	     | GCC                     |
+| M68K            | Linux            | GCC                     |
 | M68K            | RTEMS            | GCC                     |
+| M88K            | OpenBSD/mvme88k  | GCC                     |
 | Meta            | Linux            | GCC                     |
 | MicroBlaze      | Linux            | GCC                     |
 | MIPS            | IRIX             | GCC                     |
 | MIPS            | Linux            | GCC                     |
 | MIPS            | RTEMS            | GCC                     |
 | MIPS64          | Linux            | GCC                     |
-| Moxie		  | Bare metal	     | GCC
+| Moxie           | Bare metal       | GCC                     |
+| Nios II         | Linux            | GCC                     |
 | PowerPC 32-bit  | AIX              | IBM XL C                |
 | PowerPC 64-bit  | AIX              | IBM XL C                |
 | PowerPC         | AMIGA            | GCC                     |
@@ -77,7 +80,8 @@ tested:
 | PowerPC         | Mac OSX          | GCC                     |
 | PowerPC         | FreeBSD          | GCC                     |
 | PowerPC 64-bit  | FreeBSD          | GCC                     |
-| PowerPC 64-bit  | Linux            | GCC                     |
+| PowerPC 64-bit  | Linux ELFv1      | GCC                     |
+| PowerPC 64-bit  | Linux ELFv2      | GCC                     |
 | S390            | Linux            | GCC                     |
 | S390X           | Linux            | GCC                     |
 | SPARC           | Linux            | GCC                     |
@@ -87,6 +91,7 @@ tested:
 | SPARC64         | FreeBSD          | GCC                     |
 | SPARC64         | Solaris          | Oracle Solaris Studio C |
 | TILE-Gx/TILEPro | Linux            | GCC                     |
+| VAX             | OpenBSD/vax      | GCC                     |
 | X86             | FreeBSD          | GCC                     |
 | X86             | GNU HURD         | GCC                     |
 | X86             | Interix          | GCC                     |
@@ -163,6 +168,12 @@ History
 
 See the ChangeLog files for details.
 
+3.0.14 TBD
+        Add Nios II support.
+        Add m88k and DEC VAX support.
+	Fix MIPS N32 ABI bug.
+	Various FreeBSD and UltraSPARC IIi fixes.
+
 3.0.13 Mar-17-13
 	Add Meta support.
 	Add missing Moxie bits.
@@ -187,7 +198,6 @@ See the ChangeLog files for details.
 
 3.0.11 Apr-11-12
         Lots of build fixes.
-	Add Amiga newer MacOS support.
 	Add support for variadic functions (ffi_prep_cif_var).
 	Add Linux/x32 support.
 	Add thiscall, fastcall and MSVC cdecl support on Windows.
@@ -339,7 +349,7 @@ See the ChangeLog files for details.
 Authors & Credits
 =================
 
-libffi was originally written by Anthony Green <green@redhat.com>.
+libffi was originally written by Anthony Green <green@moxielogic.com>.
 
 The developers of the GNU Compiler Collection project have made
 innumerable valuable contributions.  See the ChangeLog file for
@@ -363,10 +373,12 @@ frv		Anthony Green
 ia64		Hans Boehm
 m32r		Kazuhiro Inaoka
 m68k		Andreas Schwab
+m88k		Miod Vallat
 microblaze	Nathan Rossi
 mips		Anthony Green, Casey Marshall
 mips64		David Daney
 moxie		Anthony Green
+nios ii		Sandra Loosemore
 pa		Randolph Chung, Dave Anglin, Andreas Tobler
 powerpc		Geoffrey Keating, Andreas Tobler, 
 			 David Edelsohn, John Hornkvist
@@ -376,6 +388,7 @@ sh		Kaz Kojima
 sh64		Kaz Kojima
 sparc		Anthony Green, Gordon Irlam
 tile-gx/tilepro Walter Lee
+vax		Miod Vallat
 x86		Anthony Green, Jon Beniston
 x86-64		Bo Thorsen
 xtensa		Chris Zankel

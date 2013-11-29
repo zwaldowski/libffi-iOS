@@ -309,13 +309,13 @@ void ffi_call(ffi_cif *cif, void (*fn)(void), void *rvalue, void **avalue)
   int vfp_struct = (cif->flags == FFI_TYPE_STRUCT_VFP_FLOAT
 		    || cif->flags == FFI_TYPE_STRUCT_VFP_DOUBLE);
 
+  unsigned int temp;
+  
   ecif.cif = cif;
   ecif.avalue = avalue;
 
-  unsigned int temp;
-
   /* If the return value is a struct and we don't have a return	*/
-  /* value address then we need to make one		        */
+  /* value address then we need to make one			*/
 
   if ((rvalue == NULL) &&
       (cif->flags == FFI_TYPE_STRUCT))
@@ -369,7 +369,9 @@ void ffi_closure_VFP (ffi_closure *);
 /* This function is jumped to by the trampoline */
 
 unsigned int ffi_closure_inner (ffi_closure *closure, void **respp, void *args, void *vfp_args);
-unsigned int ffi_closure_inner (ffi_closure *closure, void **respp, void *args, void *vfp_args)
+unsigned int
+ffi_closure_inner (ffi_closure *closure, 
+		   void **respp, void *args, void *vfp_args)
 {
   // our various things...
   ffi_cif       *cif;
@@ -487,18 +489,23 @@ ffi_prep_incoming_args_VFP(char *stack, void **rvalue,
 
           p_argv++;
           regp = tregp + z;
-          /* if regp points above the end of the register area */
+          // if we read past the last core register, make sure we have not read
+          // from the stack before and continue reading after regp
+          if(regp > eo_regp)
+            {
+            if(stack_used)
+              {
+                abort(); // we should never read past the end of the register
+                         // are if the stack is already in use
+              }
+            argp = regp;
+            }
           if(regp >= eo_regp)
             {
-              /* sanity check that we haven't read from the stack area before
-               * reaching this point */
-              FFI_ASSERT(argp <= regp);
-              FFI_ASSERT(argp == stack + 16);
-              argp = regp;
-              done_with_regs = 1;
-              stack_used = 1;
+            done_with_regs = 1;
+            stack_used = 1;
             }
-            continue;
+          continue;
           }
       }
     stack_used = 1;
@@ -535,7 +542,7 @@ typedef struct ffi_trampoline_table ffi_trampoline_table;
 typedef struct ffi_trampoline_table_entry ffi_trampoline_table_entry;
 
 struct ffi_trampoline_table {
-  /* contigious writable and executable pages */
+  /* contiguous writable and executable pages */
   vm_address_t config_page;
   vm_address_t trampoline_page;
 
@@ -575,7 +582,7 @@ ffi_trampoline_table_alloc ()
 {
   ffi_trampoline_table *table = NULL;
 
-  /* Loop until we can allocate two contigious pages */
+  /* Loop until we can allocate two contiguous pages */
   while (table == NULL) {
     vm_address_t config_page = 0x0;
     kern_return_t kt;
@@ -854,7 +861,7 @@ static int vfp_type_p (ffi_type *t)
   return 0;
 }
 
-static void place_vfp_arg (ffi_cif *cif, ffi_type *t)
+static int place_vfp_arg (ffi_cif *cif, ffi_type *t)
 {
   int reg = cif->vfp_reg_free;
   int nregs = t->size / sizeof (float);
@@ -887,9 +894,13 @@ static void place_vfp_arg (ffi_cif *cif, ffi_type *t)
 	    reg += 1;
 	  cif->vfp_reg_free = (typeof(cif->vfp_reg_free))reg;
 	}
-      return;
+      return 0;
     next_reg: ;
     }
+  // done, mark all regs as used
+  cif->vfp_reg_free = 16;
+  cif->vfp_used = 0xFFFF;
+  return 1;
 }
 
 static void layout_vfp_args (ffi_cif *cif)
@@ -904,7 +915,9 @@ static void layout_vfp_args (ffi_cif *cif)
   for (i = 0; i < cif->nargs; i++)
     {
       ffi_type *t = cif->arg_types[i];
-      if (vfp_type_p (t))
-	place_vfp_arg (cif, t);
+      if (vfp_type_p (t) && place_vfp_arg (cif, t) == 1)
+        {
+          break;
+        }
     }
 }

@@ -9,7 +9,8 @@ SUBDIRS = include testsuite man
 EXTRA_DIST = LICENSE ChangeLog.v1 ChangeLog.libgcj configure.host	\
 	 src/aarch64/ffi.c src/aarch64/ffitarget.h src/aarch64/sysv.S	\
 	 build-ios.sh src/alpha/ffi.c src/alpha/osf.S			\
-	 src/alpha/ffitarget.h src/arm/ffi.c src/arm/sysv.S		\
+	 src/alpha/ffitarget.h src/arc/ffi.c src/arc/arcompact.S	\
+	 src/arc/ffitarget.h src/arm/ffi.c src/arm/sysv.S		\
 	 src/arm/ffitarget.h src/avr32/ffi.c src/avr32/sysv.S		\
 	 src/avr32/ffitarget.h src/cris/ffi.c src/cris/sysv.S		\
 	 src/cris/ffitarget.h src/ia64/ffi.c src/ia64/ffitarget.h	\
@@ -19,8 +20,12 @@ EXTRA_DIST = LICENSE ChangeLog.v1 ChangeLog.libgcj configure.host	\
 	 src/moxie/ffitarget.h src/moxie/eabi.S src/mips/ffitarget.h	\
 	 src/m32r/ffi.c src/m32r/sysv.S src/m32r/ffitarget.h		\
 	 src/m68k/ffi.c src/m68k/sysv.S src/m68k/ffitarget.h		\
+	 src/m88k/ffi.c src/m88k/obsd.S src/m88k/ffitarget.h		\
 	 src/microblaze/ffi.c src/microblaze/sysv.S			\
-	 src/microblaze/ffitarget.h src/powerpc/ffi.c			\
+	 src/microblaze/ffitarget.h					\
+	 src/nios2/ffi.c src/nios2/ffitarget.h src/nios2/sysv.S		\
+	 src/powerpc/ffi.c src/powerpc/ffi_powerpc.h			\
+	 src/powerpc/ffi_sysv.c src/powerpc/ffi_linux64.c		\
 	 src/powerpc/sysv.S src/powerpc/linux64.S			\
 	 src/powerpc/linux64_closure.S src/powerpc/ppc_closure.S	\
 	 src/powerpc/asm.h src/powerpc/aix.S src/powerpc/darwin.S	\
@@ -38,6 +43,7 @@ EXTRA_DIST = LICENSE ChangeLog.v1 ChangeLog.libgcj configure.host	\
 	 src/bfin/ffitarget.h src/bfin/sysv.S src/frv/eabi.S		\
 	 src/frv/ffitarget.h src/dlmalloc.c src/tile/ffi.c		\
 	 src/tile/ffitarget.h src/tile/tile.S libtool-version		\
+	 src/vax/ffi.c src/vax/ffitarget.h src/vax/elfbsd.S		\
 	 src/xtensa/ffitarget.h src/xtensa/ffi.c src/xtensa/sysv.S	\
 	 ChangeLog.libffi m4/libtool.m4 m4/lt~obsolete.m4		\
 	 m4/ltoptions.m4 m4/ltsugar.m4 m4/ltversion.m4			\
@@ -149,14 +155,20 @@ endif
 if M68K
 nodist_libffi_la_SOURCES += src/m68k/ffi.c src/m68k/sysv.S
 endif
+if M88K
+nodist_libffi_la_SOURCES += src/m88k/ffi.c src/m88k/obsd.S
+endif
 if MOXIE
 nodist_libffi_la_SOURCES += src/moxie/ffi.c src/moxie/eabi.S
 endif
 if MICROBLAZE
 nodist_libffi_la_SOURCES += src/microblaze/ffi.c src/microblaze/sysv.S
 endif
+if NIOS2
+nodist_libffi_la_SOURCES += src/nios2/sysv.S src/nios2/ffi.c
+endif
 if POWERPC
-nodist_libffi_la_SOURCES += src/powerpc/ffi.c src/powerpc/sysv.S src/powerpc/ppc_closure.S src/powerpc/linux64.S src/powerpc/linux64_closure.S
+nodist_libffi_la_SOURCES += src/powerpc/ffi.c src/powerpc/ffi_sysv.c src/powerpc/ffi_linux64.c src/powerpc/sysv.S src/powerpc/ppc_closure.S src/powerpc/linux64.S src/powerpc/linux64_closure.S
 endif
 if POWERPC_AIX
 nodist_libffi_la_SOURCES += src/powerpc/ffi_darwin.c src/powerpc/aix.S src/powerpc/aix_closure.S
@@ -165,10 +177,13 @@ if POWERPC_DARWIN
 nodist_libffi_la_SOURCES += src/powerpc/ffi_darwin.c src/powerpc/darwin.S src/powerpc/darwin_closure.S
 endif
 if POWERPC_FREEBSD
-nodist_libffi_la_SOURCES += src/powerpc/ffi.c src/powerpc/sysv.S src/powerpc/ppc_closure.S
+nodist_libffi_la_SOURCES += src/powerpc/ffi.c src/powerpc/ffi_sysv.c src/powerpc/sysv.S src/powerpc/ppc_closure.S
 endif
 if AARCH64
 nodist_libffi_la_SOURCES += src/aarch64/sysv.S src/aarch64/ffi.c
+endif
+if ARC
+nodist_libffi_la_SOURCES += src/arc/arcompact.S src/arc/ffi.c
 endif
 if ARM
 nodist_libffi_la_SOURCES += src/arm/sysv.S src/arm/ffi.c
@@ -211,6 +226,9 @@ nodist_libffi_la_SOURCES += src/xtensa/sysv.S src/xtensa/ffi.c
 endif
 if METAG
 nodist_libffi_la_SOURCES += src/metag/sysv.S src/metag/ffi.c
+endif
+if VAX
+nodist_libffi_la_SOURCES += src/vax/elfbsd.S src/vax/ffi.c
 endif
 
 libffi_convenience_la_SOURCES = $(libffi_la_SOURCES)

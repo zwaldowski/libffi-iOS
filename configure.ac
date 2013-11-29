@@ -2,7 +2,7 @@ dnl Process this with autoconf to create configure
 
 AC_PREREQ(2.68)
 
-AC_INIT([libffi], [3.0.13], [http://github.com/atgreen/libffi/issues])
+AC_INIT([libffi], [3.0.14-rc0], [http://github.com/atgreen/libffi/issues])
 AC_CONFIG_HEADERS([fficonfig.h])
 
 AC_CANONICAL_SYSTEM
@@ -66,6 +66,7 @@ dnl The -no-testsuite modules omit the test subdir.
 AM_CONDITIONAL(TESTSUBDIR, test -d $srcdir/testsuite)
 
 TARGETDIR="unknown"
+HAVE_LONG_DOUBLE_VARIANT=0
 case "$host" in
   aarch64*-*-*)
 	TARGET=AARCH64; TARGETDIR=aarch64
@@ -75,6 +76,10 @@ case "$host" in
 	TARGET=ALPHA; TARGETDIR=alpha;
 	# Support 128-bit long double, changeable via command-line switch.
 	HAVE_LONG_DOUBLE='defined(__LONG_DOUBLE_128__)'
+	;;
+
+  arc*-*-*)
+	TARGET=ARC; TARGETDIR=arc
 	;;
 
   arm*-*-*)
@@ -191,6 +196,10 @@ case "$host" in
 	TARGET=M68K; TARGETDIR=m68k
 	;;
 
+  m88k-*-*)
+	TARGET=M88K; TARGETDIR=m88k
+	;;
+
   microblaze*-*-*)
 	TARGET=MICROBLAZE; TARGETDIR=microblaze
 	;;
@@ -212,8 +221,13 @@ case "$host" in
 	TARGET=MIPS; TARGETDIR=mips
 	;;
 
+  nios2*-linux*)
+	TARGET=NIOS2; TARGETDIR=nios2
+	;;
+
   powerpc*-*-linux* | powerpc-*-sysv*)
 	TARGET=POWERPC; TARGETDIR=powerpc
+	HAVE_LONG_DOUBLE_VARIANT=1
 	;;
   powerpc-*-amigaos*)
 	TARGET=POWERPC; TARGETDIR=powerpc
@@ -229,6 +243,7 @@ case "$host" in
 	;;
   powerpc-*-freebsd* | powerpc-*-openbsd*)
 	TARGET=POWERPC_FREEBSD; TARGETDIR=powerpc
+	HAVE_LONG_DOUBLE_VARIANT=1
 	;;
   powerpc64-*-freebsd*)
 	TARGET=POWERPC; TARGETDIR=powerpc
@@ -256,6 +271,10 @@ case "$host" in
         TARGET=TILE; TARGETDIR=tile
         ;;
 
+  vax-*-*)
+	TARGET=VAX; TARGETDIR=vax
+	;;
+
   xtensa*-*)
 	TARGET=XTENSA; TARGETDIR=xtensa
 	;;
@@ -281,14 +300,17 @@ AM_CONDITIONAL(ALPHA, test x$TARGET = xALPHA)
 AM_CONDITIONAL(IA64, test x$TARGET = xIA64)
 AM_CONDITIONAL(M32R, test x$TARGET = xM32R)
 AM_CONDITIONAL(M68K, test x$TARGET = xM68K)
+AM_CONDITIONAL(M88K, test x$TARGET = xM88K)
 AM_CONDITIONAL(MICROBLAZE, test x$TARGET = xMICROBLAZE)
 AM_CONDITIONAL(METAG, test x$TARGET = xMETAG)
 AM_CONDITIONAL(MOXIE, test x$TARGET = xMOXIE)
+AM_CONDITIONAL(NIOS2, test x$TARGET = xNIOS2)
 AM_CONDITIONAL(POWERPC, test x$TARGET = xPOWERPC)
 AM_CONDITIONAL(POWERPC_AIX, test x$TARGET = xPOWERPC_AIX)
 AM_CONDITIONAL(POWERPC_DARWIN, test x$TARGET = xPOWERPC_DARWIN)
 AM_CONDITIONAL(POWERPC_FREEBSD, test x$TARGET = xPOWERPC_FREEBSD)
 AM_CONDITIONAL(AARCH64, test x$TARGET = xAARCH64)
+AM_CONDITIONAL(ARC, test x$TARGET = xARC)
 AM_CONDITIONAL(ARM, test x$TARGET = xARM)
 AM_CONDITIONAL(AVR32, test x$TARGET = xAVR32)
 AM_CONDITIONAL(LIBFFI_CRIS, test x$TARGET = xLIBFFI_CRIS)
@@ -301,6 +323,7 @@ AM_CONDITIONAL(PA_LINUX, test x$TARGET = xPA_LINUX)
 AM_CONDITIONAL(PA_HPUX, test x$TARGET = xPA_HPUX)
 AM_CONDITIONAL(PA64_HPUX, test x$TARGET = xPA64_HPUX)
 AM_CONDITIONAL(TILE, test x$TARGET = xTILE)
+AM_CONDITIONAL(VAX, test x$TARGET = xVAX)
 AM_CONDITIONAL(XTENSA, test x$TARGET = xXTENSA)
 
 AC_HEADER_STDC
@@ -313,14 +336,20 @@ AC_CHECK_SIZEOF(long double)
 # Also AC_SUBST this variable for ffi.h.
 if test -z "$HAVE_LONG_DOUBLE"; then
   HAVE_LONG_DOUBLE=0
-  if test $ac_cv_sizeof_double != $ac_cv_sizeof_long_double; then
-    if test $ac_cv_sizeof_long_double != 0; then
+  if test $ac_cv_sizeof_long_double != 0; then
+    if test $HAVE_LONG_DOUBLE_VARIANT != 0; then
+      AC_DEFINE(HAVE_LONG_DOUBLE_VARIANT, 1, [Define if you support more than one size of the long double type])
       HAVE_LONG_DOUBLE=1
-      AC_DEFINE(HAVE_LONG_DOUBLE, 1, [Define if you have the long double type and it is bigger than a double])
+    else
+      if test $ac_cv_sizeof_double != $ac_cv_sizeof_long_double; then
+        HAVE_LONG_DOUBLE=1
+        AC_DEFINE(HAVE_LONG_DOUBLE, 1, [Define if you have the long double type and it is bigger than a double])
+      fi
     fi
   fi
 fi
 AC_SUBST(HAVE_LONG_DOUBLE)
+AC_SUBST(HAVE_LONG_DOUBLE_VARIANT)
 
 AC_C_BIGENDIAN
 

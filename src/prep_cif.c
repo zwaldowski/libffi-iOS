@@ -76,6 +76,13 @@ static ffi_status initialize_aggregate(ffi_type *arg)
      total size of 3*sizeof(long).  */
   arg->size = ALIGN (arg->size, arg->alignment);
 
+  /* On some targets, the ABI defines that structures have an additional
+     alignment beyond the "natural" one based on their elements.  */
+#ifdef FFI_AGGREGATE_ALIGNMENT
+  if (FFI_AGGREGATE_ALIGNMENT > arg->alignment)
+    arg->alignment = FFI_AGGREGATE_ALIGNMENT;
+#endif
+
   if (arg->size == 0)
     return FFI_BAD_TYPEDEF;
   else
@@ -126,6 +133,10 @@ ffi_status FFI_HIDDEN ffi_prep_cif_core(ffi_cif *cif, ffi_abi abi,
 
   cif->flags = 0;
 
+#if HAVE_LONG_DOUBLE_VARIANT
+  ffi_prep_types (abi);
+#endif
+
   /* Initialize the return type if necessary */
   if ((cif->rtype->size == 0) && (initialize_aggregate(cif->rtype) != FFI_OK))
     return FFI_BAD_TYPEDEF;
@@ -146,7 +157,9 @@ ffi_status FFI_HIDDEN ffi_prep_cif_core(ffi_cif *cif, ffi_abi abi,
 #ifdef XTENSA
       && (cif->rtype->size > 16)
 #endif
-
+#ifdef NIOS2
+      && (cif->rtype->size > 8)
+#endif
      )
     bytes = STACK_ARG_SIZE(sizeof(void*));
 #endif
