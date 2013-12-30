@@ -1,7 +1,7 @@
 2013-11-21  Anthony Green  <green@moxielogic.com>
 
 	* configure, Makefile.in, include/Makefile.in, include/ffi.h.in,
-	man/Makefile.in, testsuite/Makefile.in: Rebuilt.
+	man/Makefile.in, testsuite/Makefile.in, fficonfig.h.in: Rebuilt.
 
 2013-11-21  Alan Modra  <amodra@gmail.com>
 
